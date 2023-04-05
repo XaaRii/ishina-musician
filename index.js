@@ -7,6 +7,10 @@ const { Collection, Events, AttachmentBuilder, REST, Routes } = require('discord
 const Client = require('./client/Client');
 const client = new Client();
 var prefix = config.prefix, prefixAlias = config.prefixAlias;
+if (config.standalone) {
+	prefix = config.standalonePrefix;
+	prefixAlias = undefined;
+} 
 
 // Slash commands init
 client.commands = new Collection();
@@ -102,7 +106,7 @@ client.on(Events.MessageCreate, async message => {
 	if (message.author.bot || !message.guild) return;
 
 	var shorty = false;
-	if (message.content.toLowerCase().startsWith(prefixAlias)) shorty = true;
+	if (prefixAlias && message.content.toLowerCase().startsWith(prefixAlias)) shorty = true;
 	else if (!message.content.toLowerCase().startsWith(prefix)) return;
 
 	const args = shorty ? message.content.slice(prefixAlias.length).trim().split(/ +/) : message.content.slice(prefix.length).trim().split(/ +/);
