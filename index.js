@@ -2,24 +2,27 @@ splash();
 require('console-stamp')(console);
 
 const fs = require('fs');
-const { Collection, PresenceUpdateStatus } = require('discord.js');
+const { Collection, Events, AttachmentBuilder, REST, Routes } = require('discord.js');
 const Client = require('./client/Client');
 const config = require('./.cfg.json');
+var prefix = config.prefix, prefixAlias = config.prefixAlias;
 const { Player } = require('discord-player');
 
 const { ActivityType } = require('discord.js');
 
 const client = new Client();
+
+// Slash commands init
 client.commands = new Collection();
-
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
-
 for (const file of commandFiles) {
 	const command = require(`./commands/${file}`);
 	client.commands.set(command.name, command);
 }
+const rest = new REST({ version: '10' }).setToken(config.dcToken);
 
-console.log(client.commands);
+const { exec } = require('child_process');
+const { inspect } = require('util');
 
 const player = new Player(client);
 
@@ -66,28 +69,126 @@ player.on('queueEnd', queue => {
 	queue.metadata.channel.send('✅ | Queue finished!');
 });
 
-client.once('ready', async () => {
+client.once(Events.ClientReady, async () => {
 	console.log('Ready!');
 });
 
-client.on('ready', function () {
-	client.user.setPresence({
-		activities: [{ name: config.activity, type: Number(config.activityType) }],
-		status: PresenceUpdateStatus.Online,
-	});
+client.on(Events.ClientReady, function () {
+	console.info(`Logged in as ${client.user.tag}!`);
+	if (config.standalone) {
+		client.user.setPresence({
+			activities: [{ name: config.standalonePresence.activity, type: Number(config.standalonePresence.type) }],
+			status: config.standalonePresence.status,
+		});
+	} else {
+		client.user.setStatus('invisible');
+		console.info(`I am a module [${config.moduleName}] with prefix ${config.prefix} (${config.prefixAlias})`);
+		if (client.channels.cache.get('894203532092264458') !== undefined) client.channels.cache.get('894203532092264458').send('Musician module started!');
+	}
 });
 
-client.once('reconnecting', () => {
+client.once(Events.ShardReconnecting, () => {
 	console.log('Reconnecting!');
 });
 
-client.once('disconnect', () => {
+client.once(Events.ShardDisconnect, () => {
 	console.log('Disconnect!');
 });
 
-client.on('messageCreate', async message => {
+client.on(Events.MessageCreate, async message => {
+	if (config.standalone && message.channel.id === "894204559306674177" && message.content === "Module check!") return message.channel.send({ content: config.moduleName });
 	if (message.author.bot || !message.guild) return;
-	if (!client.application?.owner) await client.application?.fetch();
+	
+	var shorty = false;
+	if (message.content.toLowerCase().startsWith(prefixAlias)) shorty = true;
+	else if (!message.content.toLowerCase().startsWith(prefix)) return;
+
+	const args = shorty ? message.content.slice(prefixAlias.length).trim().split(/ +/) : message.content.slice(prefix.length).trim().split(/ +/);
+	const commandName = args.shift().toLowerCase();
+
+	switch (commandName) {
+		case "refresh":
+			message.channel.sendTyping();
+			var commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+			for (const file of commandFiles) {
+				const command = require(`./commands/${file}`);
+				client.commands.set(command.name, command);
+			}
+			message.reply("Command list reloaded.");
+			break;
+		case "crash": case "fs":
+			if (message.author.id === config.xaari) {
+				var whoasked = message.author.username;
+				if (commandName === "fs") { // fs
+					message.channel.send('Full Reset...')
+						.then(msg => {
+							client.destroy();
+							console.log(`Shutting down on request of ${whoasked}.`);
+							process.exit();
+						});
+				} else { // crash
+					message.channel.send('Oh shit a concrete wall-')
+						.then(msg => {
+							client.destroy();
+							console.log(`Concrete wall built on request of ${whoasked}.`);
+							const x = require("./keepAlive.js");
+						});
+				}
+			} else message.channel.send("*You wanted to restart their framework, but you don't have enough permissions.*\n  Hehe, error 404: Your perms not found.");
+			break;
+		case "rpicmd": case "eval":
+			var msgauthor = message.author.id;
+			var cmd = args.join(' ').toString();
+			message.channel.sendTyping();
+			if (msgauthor === config.xaari) {
+				if (commandName === "rpicmd") return execcall(message.channel, cmd);
+				else return evalcall(args, message);
+			} else return message.reply("**ᴀᴄᴄᴇꜱꜱ ᴅᴇɴɪᴇᴅ**, get lost.");
+		case "deploy":
+			if (message.author.id !== config.xaari) return;
+			if (args[0] === "local") {
+				try {
+					const slashCommands = [];
+					client.commands = new Collection();
+					var i = 0;
+					const slashFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+					for (const file of slashFiles) {
+						const command = require(`./commands/${file}`);
+						client.commands.set(command.data.name, command);
+						args[1] === "overwrite" ? slashCommands.push(command) : await rest.post(Routes.applicationCommands(config.dcAppID, message.guildId), { body: command.data.toJSON() });
+						i++;
+					}
+					console.log(`deploy of ${i} slash commands globally on ${message.author.username}'s request.`);
+					if (args[1] === "overwrite") await rest.put(Routes.applicationCommands(config.dcAppID, message.guildId), { body: slashCommands });
+					message.reply(i + " slash commands deployed successfully on this server~");
+				} catch (error) {
+					message.channel.send('Could not deploy commands!\n' + error);
+					console.error(error);
+				}
+			} else if (args[0] === "global") {
+				try {
+					const slashPubCommands = [];
+					client.commands = new Collection();
+					i = 0;
+					const slashFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+					for (const file of slashFiles) {
+						const command = require(`./commands/${file}`);
+						client.commands.set(command.data.name, command);
+						if (!command.developer) {
+							args[1] === "overwrite" ? slashPubCommands.push(command) : await rest.post(Routes.applicationCommands(config.dcAppID), { body: command.data.toJSON() });
+							i++;
+						}
+					}
+					console.log(`deploy of ${i} slash commands globally on ${message.author.username}'s request.`);
+					if (args[1] === "overwrite") await rest.put(Routes.applicationCommands(config.dcAppID), { body: slashPubCommands });
+					message.reply(i + " slash commands deployed successfully~\nChanges may take a bit longer to proceed tho...");
+				} catch (error) {
+					message.reply("Could not deploy commands!\n" + error);
+					console.error(error);
+				}
+			} else return message.channel.send("Missing argument: local/global (overwrite)");
+			break;
+	}
 
 	if (message.content === '!deploy' && message.author.id === client.application?.owner?.id) {
 		await message.guild.commands
@@ -102,15 +203,19 @@ client.on('messageCreate', async message => {
 	}
 });
 
-client.on('interactionCreate', async interaction => {
-	const command = client.commands.get(interaction.commandName.toLowerCase());
+client.on(Events.InteractionCreate, async interaction => {
+	if (!interaction.isChatInputCommand()) return;
 
+	const command = client.commands.get(interaction.commandName);
+	if (!command) return; // Not meant for us
+	if (command.developer && interaction.user.id !== config.xaari) {
+		return interaction.reply({
+			content: "This command is only available to the developer (and you look like someone who can't even make 'Hello world' program).",
+			ephemeral: true,
+		});
+	}
 	try {
-		if (interaction.commandName == 'ban' || interaction.commandName == 'userinfo') {
-			command.execute(interaction, client);
-		} else {
-			command.execute(interaction, player);
-		}
+		command.execute(interaction, player);
 	} catch (error) {
 		console.error(error);
 		interaction.followUp({
@@ -119,7 +224,18 @@ client.on('interactionCreate', async interaction => {
 	}
 });
 
+process.on('uncaughtException', (reason) => {
+	console.log(reason);
+	if (client.channels.cache.get('735207428299161602') !== undefined) client.channels.cache.get('735207428299161602').send(config.moduleName + ': `UncaughtException:`\n' + reason);
+});
+process.on('unhandledRejection', (reason) => {
+	console.log(reason);
+	if (client.channels.cache.get('735207428299161602') !== undefined) client.channels.cache.get('735207428299161602').send(config.moduleName + ': `Unhandled promise rejection:`\n' + reason);
+});
+
 client.login(config.dcToken);
+
+/* FUNCTIONS */
 
 async function splash() {
 	return console.log(`
@@ -135,4 +251,41 @@ async function splash() {
 
 					      Ishina Modules: Musician
 `);
+}
+
+async function execcall(msgchannel, cmd) {
+	const m = await msgchannel.send("Request sent.");
+	exec(cmd, function (error, stdout, stderr) {
+		if (!stdout) {
+			m.edit("Done.");
+		} else if (stdout.length >= 1950) {
+			const atc = new AttachmentBuilder(Buffer.from(stdout), { name: 'rpicmd.txt' });
+			m.edit({ content: "Done! Here are the results:", files: [atc] });
+		} else m.edit({ content: "Done! Here are the results:\n" + stdout });
+		if (error !== null) {
+			msgchannel.send("ᴇʀʀᴏʀ: `" + stderr + "`");
+		}
+	});
+}
+
+async function evalcall(args, message) {
+	let evaled;
+	try {
+		if (args[0] === "output") {
+			evaled = await eval(args.slice(1).join(' '));
+			if (evaled !== undefined) {
+				if (inspect(evaled).length >= 1970) {
+					const atc = new AttachmentBuilder(Buffer.from(inspect(evaled)), { name: 'eval.txt' });
+					message.channel.send({ content: "Evaluation too long, so instead i'll send a file containing result.:", files: [atc] });
+				} else message.channel.send(inspect(evaled));
+				console.log(inspect(evaled));
+			} else return message.channel.send("Evaluated.");
+		} else {
+			evaled = await eval(args.join(' '));
+		}
+	}
+	catch (err) {
+		console.error(err);
+		message.reply(`There was an error during evaluation. ᴇʀʀᴏʀ: \`${err}\``);
+	}
 }
