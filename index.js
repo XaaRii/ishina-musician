@@ -27,20 +27,20 @@ const { inspect } = require('util');
 const { Player } = require('discord-player');
 const player = new Player(client);
 
-player.events.on('connection', (queue) => {
-	queue.connection.on('stateChange', (oldState, newState) => {
-		const oldNetworking = Reflect.get(oldState, 'networking');
-		const newNetworking = Reflect.get(newState, 'networking');
+// player.events.on('connection', (queue) => {
+// 	queue.connection.on('stateChange', (oldState, newState) => {
+// 		const oldNetworking = Reflect.get(oldState, 'networking');
+// 		const newNetworking = Reflect.get(newState, 'networking');
 
-		const networkStateChangeHandler = (oldNetworkState, newNetworkState) => {
-			const newUdp = Reflect.get(newNetworkState, 'udp');
-			clearInterval(newUdp?.keepAliveInterval);
-		}
+// 		const networkStateChangeHandler = (oldNetworkState, newNetworkState) => {
+// 			const newUdp = Reflect.get(newNetworkState, 'udp');
+// 			clearInterval(newUdp?.keepAliveInterval);
+// 		}
 
-		oldNetworking?.off('stateChange', networkStateChangeHandler);
-		newNetworking?.on('stateChange', networkStateChangeHandler);
-	});
-});
+// 		oldNetworking?.off('stateChange', networkStateChangeHandler);
+// 		newNetworking?.on('stateChange', networkStateChangeHandler);
+// 	});
+// });
 
 player.events.on('error', (queue, error) => {
 	console.log(`[${queue.guild.name}] Error emitted from the queue: ${error.message}`);
@@ -51,7 +51,7 @@ player.events.on('playerError', (queue, error) => {
 });
 
 player.events.on('playerStart', (queue, track) => {
-	queue.metadata.channel.send(`▶ | Started playing: **${track.title}** in **${queue.connection.channel.name}**!`);
+	queue.metadata.channel.send(`▶ | Started playing: **${track.title}** in <#${queue.channel.id}>!`);
 });
 
 player.events.on('audioTrackAdd', (queue, track) => {
