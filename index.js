@@ -156,8 +156,8 @@ client.on(Events.MessageCreate, async message => {
 					const slashFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 					for (const file of slashFiles) {
 						const command = require(`./commands/${file}`);
-						client.commands.set(command.data.name, command);
-						args[1] === "overwrite" ? slashCommands.push(command) : await rest.post(Routes.applicationCommands(config.dcAppID, message.guildId), { body: command.data.toJSON() });
+						client.commands.set(command.name, command);
+						args[1] === "overwrite" ? slashCommands.push(command) : await rest.post(Routes.applicationCommands(config.dcAppID, message.guildId), { body: command });
 						i++;
 					}
 					console.log(`deploy of ${i} slash commands globally on ${message.author.username}'s request.`);
@@ -175,9 +175,9 @@ client.on(Events.MessageCreate, async message => {
 					const slashFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 					for (const file of slashFiles) {
 						const command = require(`./commands/${file}`);
-						client.commands.set(command.data.name, command);
+						client.commands.set(command.name, command);
 						if (!command.developer) {
-							args[1] === "overwrite" ? slashPubCommands.push(command) : await rest.post(Routes.applicationCommands(config.dcAppID), { body: command.data.toJSON() });
+							args[1] === "overwrite" ? slashPubCommands.push(command) : await rest.post(Routes.applicationCommands(config.dcAppID), { body: command });
 							i++;
 						}
 					}
