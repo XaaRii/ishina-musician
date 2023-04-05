@@ -2,15 +2,11 @@ splash();
 require('console-stamp')(console);
 
 const fs = require('fs');
+const config = require('./.cfg.json');
 const { Collection, Events, AttachmentBuilder, REST, Routes } = require('discord.js');
 const Client = require('./client/Client');
-const config = require('./.cfg.json');
-var prefix = config.prefix, prefixAlias = config.prefixAlias;
-const { Player } = require('discord-player');
-
-const { ActivityType } = require('discord.js');
-
 const client = new Client();
+var prefix = config.prefix, prefixAlias = config.prefixAlias;
 
 // Slash commands init
 client.commands = new Collection();
@@ -24,10 +20,11 @@ const rest = new REST({ version: '10' }).setToken(config.dcToken);
 const { exec } = require('child_process');
 const { inspect } = require('util');
 
+const { Player } = require('discord-player');
 const player = new Player(client);
 
-player.on('connectionCreate', (queue) => {
-	queue.connection.voiceConnection.on('stateChange', (oldState, newState) => {
+player.events.on('connection', (queue) => {
+	queue.connection.on('stateChange', (oldState, newState) => {
 		const oldNetworking = Reflect.get(oldState, 'networking');
 		const newNetworking = Reflect.get(newState, 'networking');
 
@@ -41,33 +38,38 @@ player.on('connectionCreate', (queue) => {
 	});
 });
 
-player.on('error', (queue, error) => {
+player.events.on('error', (queue, error) => {
 	console.log(`[${queue.guild.name}] Error emitted from the queue: ${error.message}`);
 });
 
-player.on('connectionError', (queue, error) => {
-	console.log(`[${queue.guild.name}] Error emitted from the connection: ${error.message}`);
+player.events.on('playerError', (queue, error) => {
+	console.log(`[${queue.guild.name}] playerError emitted from the connection: ${error.message}`);
 });
 
-player.on('trackStart', (queue, track) => {
+player.events.on('playerStart', (queue, track) => {
 	queue.metadata.channel.send(`▶ | Started playing: **${track.title}** in **${queue.connection.channel.name}**!`);
 });
 
-player.on('trackAdd', (queue, track) => {
+player.events.on('audioTrackAdd', (queue, track) => {
 	queue.metadata.channel.send(`🎶 | Track **${track.title}** queued!`);
 });
 
-player.on('botDisconnect', queue => {
+player.events.on('audioTracksAdd', (queue, track) => {
+	queue.metadata.channel.send(`🎶 | Playlist with **${track.length} song(s)** queued!`);
+});
+
+player.events.on('disconnect', queue => {
 	queue.metadata.channel.send('❌ | I was manually disconnected from the voice channel, clearing queue!');
 });
 
-player.on('channelEmpty', queue => {
+player.events.on('emptyChannel', queue => {
 	queue.metadata.channel.send('❌ | Nobody is in the voice channel, leaving...');
 });
 
-player.on('queueEnd', queue => {
+player.events.on('emptyQueue', queue => {
 	queue.metadata.channel.send('✅ | Queue finished!');
 });
+
 
 client.once(Events.ClientReady, async () => {
 	console.log('Ready!');
@@ -98,7 +100,7 @@ client.once(Events.ShardDisconnect, () => {
 client.on(Events.MessageCreate, async message => {
 	if (config.standalone && message.channel.id === "894204559306674177" && message.content === "Module check!") return message.channel.send({ content: config.moduleName });
 	if (message.author.bot || !message.guild) return;
-	
+
 	var shorty = false;
 	if (message.content.toLowerCase().startsWith(prefixAlias)) shorty = true;
 	else if (!message.content.toLowerCase().startsWith(prefix)) return;
@@ -188,18 +190,6 @@ client.on(Events.MessageCreate, async message => {
 				}
 			} else return message.channel.send("Missing argument: local/global (overwrite)");
 			break;
-	}
-
-	if (message.content === '!deploy' && message.author.id === client.application?.owner?.id) {
-		await message.guild.commands
-			.set(client.commands)
-			.then(() => {
-				message.reply('Deployed!');
-			})
-			.catch(err => {
-				message.reply('Could not deploy commands! Make sure the bot has the application.commands permission!');
-				console.error(err);
-			});
 	}
 });
 

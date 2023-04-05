@@ -22,12 +22,12 @@ module.exports = {
     }
 
     await interaction.deferReply();
-    const queue = player.getQueue(interaction.guildId);
-    if (!queue || !queue.playing)
+    const queue = player.nodes.get(interaction.guildId);
+    if (!queue || !queue.node.isPlaying())
       return void interaction.followUp({
         content: '❌ | No music is being played!',
       });
-    queue.destroy();
+    queue.delete();
     return void interaction.followUp({content: '🛑 | Stopped the player!'});
   },
 };
