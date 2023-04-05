@@ -41,13 +41,7 @@ module.exports = {
       if (!searchResult.hasTracks())
         return void interaction.followUp({ content: 'No results were found!' });
 
-      const queue = await player.nodes.create(interaction.guild, {
-        ytdlOptions: {
-          quality: "highest",
-          filter: "audioonly",
-          highWaterMark: 1 << 30,
-          dlChunkSize: 0,
-        },
+      const queue = await player.nodes.create(interaction.guild.id, {
         metadata: {
           channel: interaction.channel,
           client: interaction.guild.members.me,
@@ -59,12 +53,18 @@ module.exports = {
         leaveOnEmptyCooldown: 300000,
         leaveOnEnd: true,
         leaveOnEndCooldown: 300000,
+        ytdlOptions: {
+          quality: "highest",
+          filter: "audioonly",
+          highWaterMark: 1 << 30,
+          dlChunkSize: 0,
+        },
       });
 
       try {
         if (!queue.connection) await queue.connect(interaction.member.voice.channel);
       } catch {
-        void player.nodes.delete(interaction.guildId);
+        void player.nodes.delete(interaction.guild.id);
         return void interaction.followUp({
           content: 'Could not join your voice channel!',
         });

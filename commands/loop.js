@@ -1,5 +1,5 @@
-const {GuildMember, ApplicationCommandOptionType} = require('discord.js');
-const {QueueRepeatMode} = require('discord-player');
+const { GuildMember, ApplicationCommandOptionType } = require('discord.js');
+const { QueueRepeatMode } = require('discord-player');
 
 module.exports = {
   name: 'loop',
@@ -53,7 +53,7 @@ module.exports = {
 
       const queue = player.nodes.get(interaction.guildId);
       if (!queue || !queue.node.isPlaying()) {
-        return void interaction.followUp({content: '❌ | No music is being played!'});
+        return void interaction.followUp({ content: '❌ | No music is being played!' });
       }
 
       const loopMode = interaction.options.getInteger('mode');
