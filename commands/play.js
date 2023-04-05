@@ -50,7 +50,7 @@ module.exports = {
 				highWaterMark: 1 << 30,
 				dlChunkSize: 0,
 			},
-        metadata: interaction.channel,
+        metadata: interaction,
       });
 
       try {
@@ -63,7 +63,7 @@ module.exports = {
       }
 
       await interaction.followUp({
-        content: `⏱ | Loading your ${searchResult.playlist ? 'playlist' : 'track'}...`,
+        content: `⏱ | Putting your ${searchResult.playlist ? 'playlist' : 'track'} into queue...`,
       });
       searchResult.playlist ? queue.addTracks(searchResult.tracks) : queue.addTrack(searchResult.tracks[0]);
       if (!queue.playing) await queue.play();
