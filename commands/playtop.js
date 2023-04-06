@@ -41,7 +41,7 @@ module.exports = {
       if (!searchResult.hasTracks())
         return void interaction.followUp({ content: 'No results were found!' });
 
-      const queue = await player.nodes.create(interaction.guild.id, {
+      const queue = await player.nodes.create(interaction.guildId, {
         metadata: {
           channel: interaction.channel,
           client: interaction.guild.members.me,
@@ -64,7 +64,7 @@ module.exports = {
       try {
         if (!queue.connection) await queue.connect(interaction.member.voice.channel);
       } catch {
-        void player.nodes.delete(interaction.guild.id);
+        void player.nodes.delete(interaction.guildId);
         return void interaction.followUp({
           content: 'Could not join your voice channel!',
         });

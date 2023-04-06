@@ -43,7 +43,7 @@ const player = new Player(client);
 // });
 
 player.events.on('error', (queue, error) => {
-	console.log(`[${queue.guild.name}] Error emitted from the queue: ${error.message}`);
+	console.log(`[${queue.guild.name}] Error emitted from the queue: ${error}`);
 });
 
 player.events.on('playerError', (queue, error) => {
@@ -102,7 +102,7 @@ client.once(Events.ShardDisconnect, () => {
 });
 
 client.on(Events.MessageCreate, async message => {
-	if (config.standalone && message.channel.id === "894204559306674177" && message.content === "Module check!") return message.channel.send({ content: config.moduleName });
+	if (!config.standalone && message.channel.id === "894204559306674177" && message.content === "Module check!") return message.channel.send({ content: config.moduleName });
 	if (message.author.bot || !message.guild) return;
 
 	var shorty = false;
@@ -123,7 +123,7 @@ client.on(Events.MessageCreate, async message => {
 			message.reply("Command list reloaded.");
 			break;
 		case "crash": case "fs":
-			if (message.author.id === config.xaari) {
+			if (config.admins.includes(message.author.id)) {
 				var whoasked = message.author.username;
 				if (commandName === "fs") { // fs
 					message.channel.send('Full Reset...')
@@ -143,15 +143,14 @@ client.on(Events.MessageCreate, async message => {
 			} else message.channel.send("*You wanted to restart their framework, but you don't have enough permissions.*\n  Hehe, error 404: Your perms not found.");
 			break;
 		case "rpicmd": case "eval":
-			var msgauthor = message.author.id;
 			var cmd = args.join(' ').toString();
 			message.channel.sendTyping();
-			if (msgauthor === config.xaari) {
+			if (config.admins.includes(message.author.id)) {
 				if (commandName === "rpicmd") return execcall(message.channel, cmd);
 				else return evalcall(args, message);
 			} else return message.reply("**ᴀᴄᴄᴇꜱꜱ ᴅᴇɴɪᴇᴅ**, get lost.");
 		case "deploy":
-			if (message.author.id !== config.xaari) return;
+			if (!config.admins.includes(message.author.id)) return;
 			if (args[0] === "local") {
 				try {
 					const slashCommands = [];
@@ -202,7 +201,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
 	const command = client.commands.get(interaction.commandName);
 	if (!command) return; // Not meant for us
-	if (command.developer && interaction.user.id !== config.xaari) {
+	if (command.developer && !config.admins.includes(interaction.author.id)) {
 		return interaction.reply({
 			content: "This command is only available to the developer (and you look like someone who can't even make 'Hello world' program).",
 			ephemeral: true,
