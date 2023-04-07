@@ -1,8 +1,9 @@
-const {GuildMember} = require('discord.js');
+const { GuildMember, SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
-  name: 'stop',
-  description: 'Stop all songs in the queue!',
+	data: new SlashCommandBuilder()
+		.setName('stop')
+		.setDescription('Stop all songs in the queue!'),
   async execute(interaction, player) {
     if (!(interaction.member instanceof GuildMember) || !interaction.member.voice.channel) {
       return void interaction.reply({
@@ -28,6 +29,6 @@ module.exports = {
         content: '❌ | No music is being played!',
       });
     queue.delete();
-    return void interaction.followUp({content: '🛑 | Stopped the player!'});
+    return void interaction.followUp({ content: '🛑 | Stopped the player!' });
   },
 };

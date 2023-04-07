@@ -1,16 +1,14 @@
-const { GuildMember, ApplicationCommandOptionType } = require('discord.js');
+const { GuildMember, SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
-	name: 'remove',
-	description: 'remove a song from the queue!',
-	options: [
-		{
-			name: 'number',
-			type: ApplicationCommandOptionType.Integer,
-			description: 'The queue number you want to remove',
-			required: true,
-		},
-	],
+	data: new SlashCommandBuilder()
+		.setName('remove')
+		.setDescription('Remove a song from the queue!')
+		.addIntegerOption(o => o
+			.setName('number')
+			.setDescription('The queue number you want to remove')
+			.setRequired(true)
+		),
 	async execute(interaction, player) {
 		if (!(interaction.member instanceof GuildMember) || !interaction.member.voice.channel) {
 			return void interaction.reply({

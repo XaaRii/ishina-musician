@@ -1,17 +1,15 @@
-const { GuildMember, ApplicationCommandOptionType } = require('discord.js');
+const { GuildMember, SlashCommandBuilder } = require('discord.js');
 const { QueryType } = require('discord-player');
 
 module.exports = {
-	name: 'playtop',
-	description: 'Play a song before the next in your channel!',
-	options: [
-		{
-			name: 'query',
-			type: ApplicationCommandOptionType.String,
-			description: 'The song you want to play',
-			required: true,
-		},
-	],
+	data: new SlashCommandBuilder()
+		.setName('playtop')
+		.setDescription('Play a song before the next in your channel!')
+		.addStringOption(o => o
+			.setName('query')
+			.setDescription('The song you want to play')
+			.setRequired(true)
+		),
 	async execute(interaction, player) {
 		try {
 			if (!(interaction.member instanceof GuildMember) || !interaction.member.voice.channel) {

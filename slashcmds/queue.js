@@ -1,8 +1,9 @@
-const { GuildMember } = require('discord.js');
+const { GuildMember, SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
-	name: 'queue',
-	description: 'View the queue of current songs!',
+	data: new SlashCommandBuilder()
+		.setName('queue')
+		.setDescription('View the queue of current songs!'),
 	async execute(interaction, player) {
 
 		if (!(interaction.member instanceof GuildMember) || !interaction.member.voice.channel) {

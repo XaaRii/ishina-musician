@@ -1,35 +1,21 @@
-const { GuildMember, ApplicationCommandOptionType } = require('discord.js');
+const { GuildMember, SlashCommandBuilder } = require('discord.js');
 const { QueueRepeatMode } = require('discord-player');
 
 module.exports = {
-	name: 'loop',
-	description: 'Sets loop mode',
-	options: [
-		{
-			name: 'mode',
-			type: ApplicationCommandOptionType.Integer,
-			description: 'Loop type',
-			required: true,
-			choices: [
-				{
-					name: 'Off',
-					value: QueueRepeatMode.OFF,
-				},
-				{
-					name: 'Track',
-					value: QueueRepeatMode.TRACK,
-				},
-				{
-					name: 'Queue',
-					value: QueueRepeatMode.QUEUE,
-				},
-				{
-					name: 'Autoplay',
-					value: QueueRepeatMode.AUTOPLAY,
-				},
-			],
-		},
-	],
+	data: new SlashCommandBuilder()
+		.setName('loop')
+		.setDescription('Sets loop mode.')
+		.addIntegerOption(o => o
+			.setName('mode')
+			.setDescription('Loop type')
+			.setRequired(true)
+			.addChoices(
+				{ name: 'Off', value: QueueRepeatMode.OFF },
+				{ name: 'Track', value: QueueRepeatMode.TRACK },
+				{ name: 'Queue', value: QueueRepeatMode.QUEUE },
+				{ name: 'Autoplay', value: QueueRepeatMode.AUTOPLAY },
+			)
+		),
 	async execute(interaction, player) {
 		try {
 			if (!(interaction.member instanceof GuildMember) || !interaction.member.voice.channel) {

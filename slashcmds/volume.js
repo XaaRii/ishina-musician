@@ -1,16 +1,14 @@
-const { GuildMember, ApplicationCommandOptionType } = require('discord.js');
+const { GuildMember, SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
-	name: 'volume',
-	description: 'Change the volume!',
-	options: [
-		{
-			name: 'volume',
-			type: ApplicationCommandOptionType.Integer,
-			description: 'Number between 0-200 (default: 50)',
-			required: true,
-		},
-	],
+	data: new SlashCommandBuilder()
+		.setName('volume')
+		.setDescription('Change the volume!')
+		.addIntegerOption(o => o
+			.setName('volume')
+			.setDescription('Number between 0-200 (default: 50)')
+			.setRequired(true)
+		),
 	async execute(interaction, player) {
 		if (!(interaction.member instanceof GuildMember) || !interaction.member.voice.channel) {
 			return void interaction.reply({

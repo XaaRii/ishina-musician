@@ -1,22 +1,19 @@
-const { GuildMember, ApplicationCommandOptionType } = require('discord.js');
+const { GuildMember, SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
-  name: 'move',
-  description: 'move song position in the queue!',
-  options: [
-    {
-      name: 'track',
-      type: ApplicationCommandOptionType.Integer,
-      description: 'The track number you want to move',
-      required: true,
-    },
-    {
-      name: 'position',
-      type: ApplicationCommandOptionType.Integer,
-      description: 'The position to move it to',
-      required: true,
-    },
-  ],
+	data: new SlashCommandBuilder()
+		.setName('move')
+		.setDescription('Move song position in the queue!')
+		.addIntegerOption(o => o
+			.setName('track')
+			.setDescription('The track number you want to move')
+			.setRequired(true)
+		)
+		.addIntegerOption(o => o
+			.setName('position')
+			.setDescription('The position to move it to')
+			.setRequired(true)
+		),
   async execute(interaction, player) {
     if (!(interaction.member instanceof GuildMember) || !interaction.member.voice.channel) {
       return void interaction.reply({

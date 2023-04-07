@@ -1,8 +1,9 @@
-const {GuildMember} = require('discord.js');
+const { GuildMember, SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
-  name: 'skip',
-  description: 'Skip a song!',
+	data: new SlashCommandBuilder()
+		.setName('skip')
+		.setDescription('Skip a song!'),
   async execute(interaction, player) {
     if (!(interaction.member instanceof GuildMember) || !interaction.member.voice.channel) {
       return void interaction.reply({
@@ -23,7 +24,7 @@ module.exports = {
 
     await interaction.deferReply();
     const queue = player.nodes.get(interaction.guildId);
-    if (!queue || queue.isEmpty()) return void interaction.followUp({content: '❌ | There is no song in the queue!'});
+    if (!queue || queue.isEmpty()) return void interaction.followUp({ content: '❌ | There is no song in the queue!' });
     const currentTrack = queue.currentTrack;
     const success = queue.node.skip();
     return void interaction.followUp({

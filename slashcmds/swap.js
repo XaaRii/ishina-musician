@@ -1,23 +1,19 @@
-const { GuildMember, ApplicationCommandOptionType } = require('discord.js');
+const { GuildMember, SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
-	name: 'swap',
-	description: 'swap song positions in the queue!',
-	options: [
-		{
-			name: 'track1',
-			type: ApplicationCommandOptionType.Integer,
-			description: 'The track number you want to swap',
-
-			required: true,
-		},
-		{
-			name: 'track2',
-			type: ApplicationCommandOptionType.Integer,
-			description: 'The track number you want to swap',
-			required: true,
-		},
-	],
+	data: new SlashCommandBuilder()
+		.setName('swap')
+		.setDescription('Swap song positions in the queue!')
+		.addIntegerOption(o => o
+			.setName('track1')
+			.setDescription('The track number you want to swap')
+			.setRequired(true)
+		)
+		.addIntegerOption(o => o
+			.setName('track2')
+			.setDescription('The track number you want to swap')
+			.setRequired(true)
+		),
 	async execute(interaction, player) {
 		if (!(interaction.member instanceof GuildMember) || !interaction.member.voice.channel) {
 			return void interaction.reply({
