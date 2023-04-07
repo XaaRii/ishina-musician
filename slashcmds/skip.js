@@ -23,7 +23,7 @@ module.exports = {
 
     await interaction.deferReply();
     const queue = player.nodes.get(interaction.guildId);
-    if (!queue || !queue.node.isPlaying()) return void interaction.followUp({content: '❌ | No music is being played!'});
+    if (!queue || queue.isEmpty()) return void interaction.followUp({content: '❌ | There is no song in the queue!'});
     const currentTrack = queue.currentTrack;
     const success = queue.node.skip();
     return void interaction.followUp({

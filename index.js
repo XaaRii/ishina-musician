@@ -10,15 +10,24 @@ var prefix = config.prefix, prefixAlias = config.prefixAlias;
 if (config.standalone) {
 	prefix = config.standalonePrefix;
 	prefixAlias = undefined;
-} 
+}
 
-// Slash commands init
+// Commands init
 client.commands = new Collection();
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 for (const file of commandFiles) {
 	const command = require(`./commands/${file}`);
 	client.commands.set(command.name, command);
 }
+
+// Slash commands init
+client.slashCollection = new Collection();
+const slashCollectionFiles = fs.readdirSync('./slashcmds').filter(file => file.endsWith('.js'));
+for (const file of slashCollectionFiles) {
+	const command = require(`./slashcmds/${file}`);
+	client.slashCollection.set(command.data.name, command);
+}
+
 const rest = new REST({ version: '10' }).setToken(config.dcToken);
 
 const { exec } = require('child_process');
@@ -59,11 +68,11 @@ player.events.on('audioTrackAdd', (queue, track) => {
 });
 
 player.events.on('audioTracksAdd', (queue, track) => {
-	queue.metadata.channel.send(`🎶 | Playlist with **${track.length} song(s)** queued!`);
+	queue.metadata.channel.send(`🎶 | **${track.length} song(s)** queued!`);
 });
 
 player.events.on('disconnect', queue => {
-	queue.metadata.channel.send('❌ | I was manually disconnected from the voice channel, clearing queue!');
+	queue.metadata.channel.send('❌ | Leaving the voice channel and clearing queue...');
 });
 
 player.events.on('emptyChannel', queue => {
@@ -150,37 +159,50 @@ client.on(Events.MessageCreate, async message => {
 				else return evalcall(args, message);
 			} else return message.reply("**ᴀᴄᴄᴇꜱꜱ ᴅᴇɴɪᴇᴅ**, get lost.");
 		case "deploy":
-			if (!config.admins.includes(message.author.id)) return;
+			if (!config.admins.includes(message.author.id)) return message.channel.send("How about deploying yourself into a proper employment instead?");
+			message.channel.sendTyping();
+			var resp = ['Registering commands in progress...\n'];
+			var progressbar = args[1] !== "overwrite" ? message.reply({ content: resp.join("") }) : undefined;
 			if (args[0] === "local") {
 				try {
 					const slashCommands = [];
-					client.commands = new Collection();
+					client.slashCollection = new Collection();
 					var i = 0;
-					const slashFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+					const slashFiles = fs.readdirSync('./slashcmds').filter(file => file.endsWith('.js'));
 					for (const file of slashFiles) {
-						const command = require(`./commands/${file}`);
-						client.commands.set(command.name, command);
-						args[1] === "overwrite" ? slashCommands.push(command) : await rest.post(Routes.applicationCommands(config.dcAppID, message.guildId), { body: command });
+						const command = require(`./slashcmds/${file}`);
+						client.slashCollection.set(command.data.name, command);
+						if (args[1] === "overwrite") slashCommands.push(command.data);
+						else {
+							await rest.post(Routes.applicationCommands(config.dcAppID, message.guildId), { body: command.data.toJSON() });
+							resp.push(command.data.name + " ");
+							progressbar.edit(resp.join(""));
+						}
 						i++;
 					}
 					console.log(`deploy of ${i} slash commands globally on ${message.author.username}'s request.`);
 					if (args[1] === "overwrite") await rest.put(Routes.applicationCommands(config.dcAppID, message.guildId), { body: slashCommands });
-					message.reply(i + " slash commands deployed successfully on this server~");
+					if (!progressbar) message.reply(i + " slash commands deployed successfully on this server~");
+					else {
+						resp.push(`\n\n${i} slash commands deployed successfully on this server~`);
+						progressbar.edit(resp.join(""));
+					}
 				} catch (error) {
-					message.channel.send('Could not deploy commands!\n' + error);
+					if (!progressbar) message.channel.send('Could not deploy commands!\n' + error);
+					else progressbar.edit('Could not deploy commands!\n' + error);
 					console.error(error);
 				}
 			} else if (args[0] === "global") {
 				try {
 					const slashPubCommands = [];
-					client.commands = new Collection();
+					client.slashCollection = new Collection();
 					i = 0;
-					const slashFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+					const slashFiles = fs.readdirSync('./slashcmds').filter(file => file.endsWith('.js'));
 					for (const file of slashFiles) {
-						const command = require(`./commands/${file}`);
-						client.commands.set(command.name, command);
+						const command = require(`./slashcmds/${file}`);
+						client.slashCollection.set(command.data.name, command);
 						if (!command.developer) {
-							args[1] === "overwrite" ? slashPubCommands.push(command) : await rest.post(Routes.applicationCommands(config.dcAppID), { body: command });
+							args[1] === "overwrite" ? slashPubCommands.push(command) : await rest.post(Routes.applicationCommands(config.dcAppID), { body: command.data.toJSON() });
 							i++;
 						}
 					}
@@ -194,12 +216,26 @@ client.on(Events.MessageCreate, async message => {
 			} else return message.channel.send("Missing argument: local/global (overwrite)");
 			break;
 	}
+	var command = client.commands.get(commandName) || client.commands.find(cmd => cmd.aliases && cmd.aliases.includes(commandName));
+	if (!command) return;
+
+	if (command.guildOnly && message.channel.isDMBased()) {
+		const guildOnlyMessages = ["I'm not gonna respond to this, unless you ask me on a server", "Y'know this one's a server command, right?", "I can't help you here, let's go on server!", "I can't execute that command inside DMs!"];
+		const randomGuildOnlyMessage = guildOnlyMessages[Math.floor(Math.random() * guildOnlyMessages.length)];
+		return message.reply(randomGuildOnlyMessage);
+	}
+	// try catch for commands
+	try { command.execute(message, args); }
+	catch (error) {
+		console.error(error);
+		return message.channel.send(`Error happened. Either you or my creator fucked up.\nᴇʀʀᴏʀ: \`${error}\``);
+	}
 });
 
 client.on(Events.InteractionCreate, async interaction => {
 	if (!interaction.isChatInputCommand()) return;
 
-	const command = client.commands.get(interaction.commandName);
+	const command = client.slashCollection.get(interaction.commandName);
 	if (!command) return; // Not meant for us
 	if (command.developer && !config.admins.includes(interaction.author.id)) {
 		return interaction.reply({
@@ -212,7 +248,7 @@ client.on(Events.InteractionCreate, async interaction => {
 	} catch (error) {
 		console.error(error);
 		interaction.followUp({
-			content: 'There was an error trying to execute that command!',
+			content: 'There was an error trying to execute that command:\n' + error, ephemeral: true,
 		});
 	}
 });
