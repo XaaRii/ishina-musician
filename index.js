@@ -160,9 +160,10 @@ client.on(Events.MessageCreate, async message => {
 			} else return message.reply("**ᴀᴄᴄᴇꜱꜱ ᴅᴇɴɪᴇᴅ**, get lost.");
 		case "deploy":
 			if (!config.admins.includes(message.author.id)) return message.channel.send("How about deploying yourself into a proper employment instead?");
+			if (!["global", "local"].includes(args[0])) message.channel.send("Missing argument: local/global (overwrite)");
 			message.channel.sendTyping();
 			var resp = ['Registering commands in progress...\n'];
-			var progressbar = args[1] !== "overwrite" ? message.reply({ content: resp.join("") }) : undefined;
+			var progressbar = args[1] !== "overwrite" ? await message.reply({ content: resp.join("") }) : undefined;
 			if (args[0] === "local") {
 				try {
 					const slashCommands = [];
