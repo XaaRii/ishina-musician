@@ -1,7 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 const config = require("../.cfg.json");
-var prefix; if (!config.init.isDevshina) { prefix = config.init.prefix; } else { prefix = config.init.devprefix; }
-const { client } = require('../exports.js');
+var prefix = config.prefix;
 const os = require("os"); const ms = require("ms");
 module.exports = {
 	name: 'os',
@@ -13,7 +12,7 @@ module.exports = {
 		const embed = new EmbedBuilder().setColor('#A6E2F2').setTimestamp();
 		switch (args[0]) {
 			case "all":
-				embed.setAuthor({ name: 'OS command: all', iconURL: client.user.displayAvatarURL() })
+				embed.setAuthor({ name: 'OS command: all', iconURL: message.client.user.displayAvatarURL() })
 					.addFields(
 						{ name: 'Current hostname', value: os.hostname(), inline: true },
 						{ name: 'Free Memory (cache excluded):', value: (os.freemem() / 1048576) + " MB", inline: true },
@@ -24,19 +23,19 @@ module.exports = {
 					);
 				break;
 			case "hostname":
-				embed.setAuthor({ name: 'OS command: hostname', iconURL: client.user.displayAvatarURL() })
+				embed.setAuthor({ name: 'OS command: hostname', iconURL: message.client.user.displayAvatarURL() })
 					.addFields(
 						{ name: 'Current hostname', value: os.hostname(), inline: true },
 					);
 				break;
 			case "freemem":
-				embed.setAuthor({ name: 'OS command: freemem', iconURL: client.user.displayAvatarURL() })
+				embed.setAuthor({ name: 'OS command: freemem', iconURL: message.client.user.displayAvatarURL() })
 					.addFields(
 						{ name: 'Free Memory:', value: (os.freemem() / 1048576) + " MB", inline: true },
 					);
 				break;
 			case "maxmem":
-				embed.setAuthor({ name: 'OS command: maxmem', iconURL: client.user.displayAvatarURL() })
+				embed.setAuthor({ name: 'OS command: maxmem', iconURL: message.client.user.displayAvatarURL() })
 					.addFields(
 						{ name: 'Maximum Memory:', value: (os.totalmem() / 1048576) + " MB", inline: true },
 					);
@@ -49,7 +48,7 @@ module.exports = {
 					if (netint) netint = netint[0];
 					else return message.reply("Couldn't find any eth0 or wlan0 interfaces, this may happen fe. if I'm being hosted on windows.");
 				}
-				embed.setAuthor({ name: 'OS command: network', iconURL: client.user.displayAvatarURL() })
+				embed.setAuthor({ name: 'OS command: network', iconURL: message.client.user.displayAvatarURL() })
 					.addFields(
 						{ name: 'address:', value: netint.address.substr(0, 15) + "", inline: true },
 						{ name: 'netmask:', value: netint.netmask.substr(0, 15) + "", inline: true },
@@ -61,13 +60,13 @@ module.exports = {
 					);
 				break;
 			case "platform":
-				embed.setAuthor({ name: 'OS command: platform', iconURL: client.user.displayAvatarURL() })
+				embed.setAuthor({ name: 'OS command: platform', iconURL: message.client.user.displayAvatarURL() })
 					.addFields(
 						{ name: 'Current platform:', value: os.platform(), inline: true },
 					);
 				break;
 			case "uptime":
-				embed.setAuthor({ name: 'OS command: uptime', iconURL: client.user.displayAvatarURL() })
+				embed.setAuthor({ name: 'OS command: uptime', iconURL: message.client.user.displayAvatarURL() })
 					.setDescription('System uptime: ' + ms(os.uptime() * 1000, { long: true }));
 				break;
 			default: return message.reply({ content: "Sorry pal, that is not a valid argument\noptions: all, hostname, freemem, maxmem, network, platform, uptime" });

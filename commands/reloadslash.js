@@ -1,6 +1,5 @@
 const config = require("../.cfg.json");
-var token = config.init.dcToken, appid = config.init.dcAppID;
-if (config.init.isDevshina) { token = config.init.dcDevToken; appid = config.init.dcDevAppID; }
+var token = config.dcToken, appid = config.dcAppID;
 const { REST, Routes } = require("discord.js");
 const rest = new REST({ version: '10' }).setToken(token);
 

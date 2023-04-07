@@ -1,6 +1,5 @@
 const config = require("../.cfg.json");
 var prefix = config.prefix;
-const { client } = require('../exports.js');
 const { EmbedBuilder } = require('discord.js');
 
 module.exports = {
@@ -12,10 +11,10 @@ module.exports = {
 	execute(message, args) {
 		message.channel.sendTyping();
 		if (!args[0]) {
-			const commands = config.admins.includes(message.author.id) ? client.commands : client.commands.filter(x => x.showHelp !== false);
+			const commands = config.admins.includes(message.author.id) ? message.client.commands : message.client.commands.filter(x => x.showHelp !== false);
 			const embed = new EmbedBuilder()
 				.setColor('ffbf00')
-				.setTitle(client.user.username + " - Musician module")
+				.setTitle(message.client.user.username + " - Musician module")
 				.setThumbnail("https://cdn.discordapp.com/attachments/894179012652445756/1093896116682117130/pepelaugh.jpg")
 				.setDescription("To get more info about a specific command,\ntype " + prefix + "help [command name]")
 				.addFields([{ name: `Available Commands:`, value: commands.map(x => `\`${prefix}${x.name}\``).join(' | ') }])
@@ -24,7 +23,7 @@ module.exports = {
 			message.reply({ embeds: [embed] }).catch(e => { message.reply({ content: "something fucked up, " + e }); });
 		} else {
 			const name = args[0].toLowerCase();
-			const command = client.commands.get(name) || client.commands.find(c => c.aliases && c.aliases.includes(name));
+			const command = message.client.commands.get(name) || message.client.commands.find(c => c.aliases && c.aliases.includes(name));
 			if (!command) return message.reply('Gimme a sec... ehmm... nope, that\'s not a valid command!');
 
 			const embed = new EmbedBuilder()
