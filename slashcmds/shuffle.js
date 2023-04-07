@@ -38,7 +38,7 @@ module.exports = {
 				embeds: [
 					{
 						title: 'Now Playing',
-						description: trimString(`ᴄᴜʀʀᴇɴᴛ ꜱᴏɴɢ: **${queue.currentTrack.title}**! <a:ratjam:1093565443031175198>\n - Queue: -\n${qq.join("\n")}\n...and ${queue.tracks.data.length - 35} more!`, 4095),
+						description: trimString(`ᴄᴜʀʀᴇɴᴛ ꜱᴏɴɢ: **${queue.currentTrack.title}**! <a:ratjam:1093565443031175198>\n - Queue: -\n${qq.join("\n")}\n${(queue.tracks.data.length > 35) ? `...and ${queue.tracks.data.length - 35} more!` : `...and that's it!`}`, 4095),
 					},
 				],
 			});
