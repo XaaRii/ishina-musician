@@ -49,8 +49,8 @@ module.exports = {
 		try {
 			const track2 = queue.node.remove(queueNumbers[1]); // Remove higher track first to avoid list order issues
 			const track1 = queue.node.remove(queueNumbers[0]);
-			queue.insertTrack(track2, queueNumbers[0]); // Add track in lowest position first to avoid list order issues
-			queue.insertTrack(track1, queueNumbers[1]);
+			queue.node.insertTrack(track2, queueNumbers[0]); // Add track in lowest position first to avoid list order issues
+			queue.node.insertTrack(track1, queueNumbers[1]);
 			return void interaction.followUp({
 				content: `✅ | Swapped **${track1}** & **${track2}**!`,
 			});

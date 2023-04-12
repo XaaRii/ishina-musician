@@ -3,3 +3,4 @@ npm-debug.log
 .env
 .cfg.json
 pnpm-lock.yaml
+yarn.lock
