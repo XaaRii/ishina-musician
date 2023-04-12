@@ -47,10 +47,11 @@ module.exports = {
 				},
 				selfDeaf: true,
 				volume: 50,
-				leaveOnEmpty: true,
-				leaveOnEmptyCooldown: 300000,
+				leaveOnEmpty: false,
+				// leaveOnEmptyCooldown: 300000,
 				leaveOnEnd: true,
 				leaveOnEndCooldown: 300000,
+				skipOnNoStream: true,
 				ytdlOptions: {
 					quality: "highest",
 					filter: "audioonly",
