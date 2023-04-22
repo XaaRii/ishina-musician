@@ -34,7 +34,8 @@ const { exec } = require('child_process');
 const { inspect } = require('util');
 
 const { Player } = require('discord-player');
-const player = new Player(client);
+const player = new Player(client, { autoRegisterExtractor: false });
+await player.extractors.loadDefault();
 
 // player.events.on('connection', (queue) => {
 // 	queue.connection.on('stateChange', (oldState, newState) => {
@@ -72,20 +73,26 @@ player.events.on('audioTracksAdd', (queue, track) => {
 });
 
 player.events.on('disconnect', queue => {
-	queue.metadata.channel.send('❌ | Leaving the voice channel and clearing queue...');
+	queue.metadata.channel.send('❌ | Disconnecting...');
 });
 
 player.events.on('emptyChannel', queue => {
-	queue.metadata.channel.send('❌ | Nobody is in the voice channel, leaving...');
+	// queue.metadata.channel.send('❌ | Nobody is in the voice channel, leaving...');
 });
 
 player.events.on('emptyQueue', queue => {
-	queue.metadata.channel.send('✅ | Queue finished!');
+	const voiceConnection = queue.metadata.channel.guild.voice?.connection
+	if (voiceConnection) queue.metadata.channel.send('✅ | Queue finished!');
 });
 
+player.events.on('error', (queue, error) => {
+    console.log(`General player error event: ${error.message}`);
+    console.log(error);
+});
 
-client.once(Events.ClientReady, async () => {
-	console.log('Ready!');
+player.events.on('playerError', (queue, error) => {
+    console.log(`Player error event: ${error.message}`);
+    console.log(error);
 });
 
 client.on(Events.ClientReady, function () {
