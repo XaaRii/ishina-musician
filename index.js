@@ -35,7 +35,7 @@ const { inspect } = require('util');
 
 const { Player } = require('discord-player');
 const player = new Player(client, { autoRegisterExtractor: false });
-await player.extractors.loadDefault();
+player.extractors.loadDefault();
 
 // player.events.on('connection', (queue) => {
 // 	queue.connection.on('stateChange', (oldState, newState) => {
