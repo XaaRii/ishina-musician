@@ -30,7 +30,7 @@
     "soundcloud-scraper": "5.x",
     "spotify-url-info": "3.x",
     "youtube-sr": "4.x",
-    "ytdl-core": "https://github.com/ShantanuNair/node-ytdl-core#v4.11.3-patch.1"
+    "ytdl-core": "*"
   },
   "devDependencies": {
     "prettier": "2.8.0"
